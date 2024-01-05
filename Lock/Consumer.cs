@@ -4,20 +4,28 @@ using System.Linq;
 using System.Text;
 using System.Threading;
 using System.Threading.Tasks;
+using System.Xml.Schema;
 
 namespace Lock
 {
     public class Consumer
     {
+        private static int threadsOfConsumerCount = 0;
         private Thread t = null;
         private ConcurrentData cData;
         private object consumerLock = new object();
         private bool isStopped = false;
-        private int workPlan = 3;
+        private int totalToProduce;
+        private int workPlan;
+        private int partCount;
+        
 
-        public Consumer(ConcurrentData data)
+        public Consumer(ConcurrentData data, int productCount, int partCountOfTotal)
         {
             cData = data;
+            totalToProduce = productCount;
+            partCount = partCountOfTotal;
+            workPlan = totalToProduce / partCount;
         }
         public bool IsStopped
         {
@@ -52,7 +60,7 @@ namespace Lock
                         else
                         {
                             var count = cData.Data.Count;
-                            for (int i = 0; i < count; i++)
+                            for (int i = 0; i < count / threadsOfConsumerCount; i++) 
                             {
                                 var elem = cData.Data.Pop();
                                 Console.WriteLine($"Consumer #{consumerId}: consumed value {elem}");
@@ -62,11 +70,12 @@ namespace Lock
                     }
                     else
                     {
-                        for (int i = 0; i < workPlan; i++)
+                        for (int i = 0; i < workPlan / threadsOfConsumerCount; i++)
                         {
                             var elem = cData.Data.Pop();
                             Console.WriteLine($"Consumer #{consumerId}: consumed value {elem}");
                         }
+                        Monitor.Pulse(cData);
                     }
                 }
                 Thread.Sleep(1500);
@@ -78,7 +87,8 @@ namespace Lock
             if(t == null)
             {
                 IsStopped = false;
-                t = new Thread(Start);
+                t = new Thread(Consume);
+                threadsOfConsumerCount++;
                 t.Start();
             }
         }

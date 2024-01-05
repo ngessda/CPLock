@@ -1,0 +1,7 @@
+C:\Users\BIAdmin\source\repos\Lock\Lock\bin\Debug\Lock.exe.config
+C:\Users\BIAdmin\source\repos\Lock\Lock\bin\Debug\Lock.exe
+C:\Users\BIAdmin\source\repos\Lock\Lock\bin\Debug\Lock.pdb
+C:\Users\BIAdmin\source\repos\Lock\Lock\obj\Debug\Lock.csproj.AssemblyReference.cache
+C:\Users\BIAdmin\source\repos\Lock\Lock\obj\Debug\Lock.csproj.CoreCompileInputs.cache
+C:\Users\BIAdmin\source\repos\Lock\Lock\obj\Debug\Lock.exe
+C:\Users\BIAdmin\source\repos\Lock\Lock\obj\Debug\Lock.pdb

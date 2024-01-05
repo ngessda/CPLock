@@ -10,7 +10,10 @@ namespace Lock
         private object producerLock = new object();
         private bool isStopped = false;
         private int totalToProduce;
-        private Random random;
+        private static Random random = new Random();
+        private int partCount = 0;
+        private int partOfTotal = 0;
+
 
         public bool IsStopped
         {
@@ -29,18 +32,25 @@ namespace Lock
                 }
             }
         }
-        public Producer(ConcurrentData data, int productCount)
+        public Producer(ConcurrentData data, int productCount, int partCountOfTotal)
         {
             cData = data;
             totalToProduce = productCount;
-            random = new Random();
+            partCount = partCountOfTotal;
+            partOfTotal = totalToProduce / partCount;
         }
         private void Produce()
         {
+            if (partOfTotal < 0) 
+            {
+                Console.WriteLine("Ошибка, значение n больше N");
+                Stop();
+            }
             int currentCount = 0;
             while (!IsStopped)
             {
-                if(currentCount == totalToProduce)
+
+                if (currentCount == totalToProduce)
                 {
                     Stop();
                     continue;
@@ -50,8 +60,12 @@ namespace Lock
                     var data = random.Next(256);
                     Console.WriteLine($"Produce: produced value {data}");
                     cData.Data.Push(data);
-                    Monitor.Pulse(data);
                     currentCount++;
+                    if (currentCount >= partOfTotal)
+                    {
+                        Monitor.Pulse(cData);
+                        Monitor.Wait(cData);
+                    }
                 }
                 Thread.Sleep(200);
             }
