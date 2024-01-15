@@ -47,6 +47,7 @@ namespace Lock
                 Stop();
             }
             int currentCount = 0;
+            int currentPartOfTotal = 0;
             while (!IsStopped)
             {
 
@@ -61,10 +62,12 @@ namespace Lock
                     Console.WriteLine($"Produce: produced value {data}");
                     cData.Data.Push(data);
                     currentCount++;
-                    if (currentCount >= partOfTotal)
+                    currentPartOfTotal++;
+                    if (currentPartOfTotal >= partOfTotal)
                     {
                         Monitor.Pulse(cData);
                         Monitor.Wait(cData);
+                        currentPartOfTotal = 0;
                     }
                 }
                 Thread.Sleep(200);
