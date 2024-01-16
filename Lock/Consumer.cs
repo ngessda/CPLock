@@ -47,6 +47,10 @@ namespace Lock
         private void Consume()
         {
             int consumerId = Thread.CurrentThread.ManagedThreadId;
+            if (threadsOfConsumerCount > cData.Data.Count)
+            {
+                Stop();
+            }
             while (!IsStopped)
             {
                 lock (cData)
@@ -78,7 +82,7 @@ namespace Lock
                         Monitor.Pulse(cData);
                     }
                 }
-                Thread.Sleep(1500);
+                Thread.Sleep(150);
             }
             Console.WriteLine($"Consumer's #{consumerId} job is over");
         }
