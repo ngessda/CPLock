@@ -47,42 +47,46 @@ namespace Lock
         private void Consume()
         {
             int consumerId = Thread.CurrentThread.ManagedThreadId;
-            if (threadsOfConsumerCount > cData.Data.Count)
-            {
-                Stop();
-            }
             while (!IsStopped)
             {
-                lock (cData)
+                if (threadsOfConsumerCount > cData.Data.Count)
                 {
-                    if(cData.Data.Count < workPlan)
+                    Stop();
+                    threadsOfConsumerCount--;
+                }
+                else
+                {
+                    lock (cData)
                     {
-                        if (cData.IsProducerAlive)
+                        if (cData.Data.Count < workPlan)
                         {
-                            Monitor.Wait(cData);
+                            if (cData.IsProducerAlive)
+                            {
+                                Monitor.Wait(cData);
+                            }
+                            else
+                            {
+                                var count = cData.Data.Count;
+                                for (int i = 0; i < count / threadsOfConsumerCount; i++)
+                                {
+                                    var elem = cData.Data.Pop();
+                                    Console.WriteLine($"Consumer #{consumerId}: consumed value {elem}");
+                                }
+                                Stop();
+                            }
                         }
                         else
                         {
-                            var count = cData.Data.Count;
-                            for (int i = 0; i < count / threadsOfConsumerCount; i++) 
+                            for (int i = 0; i < workPlan / threadsOfConsumerCount; i++)
                             {
                                 var elem = cData.Data.Pop();
                                 Console.WriteLine($"Consumer #{consumerId}: consumed value {elem}");
                             }
-                            Stop();
+                            Monitor.Pulse(cData);
                         }
-                    }
-                    else
-                    {
-                        for (int i = 0; i < workPlan / threadsOfConsumerCount; i++)
-                        {
-                            var elem = cData.Data.Pop();
-                            Console.WriteLine($"Consumer #{consumerId}: consumed value {elem}");
-                        }
-                        Monitor.Pulse(cData);
                     }
                 }
-                Thread.Sleep(150);
+                    Thread.Sleep(150);
             }
             Console.WriteLine($"Consumer's #{consumerId} job is over");
         }
