@@ -65,7 +65,8 @@ namespace Lock
                     currentPartOfTotal++;
                     if (currentPartOfTotal >= partOfTotal)
                     {
-                        Monitor.Pulse(cData);
+                        cData.Flag = true;
+                        Monitor.PulseAll(cData);
                         Monitor.Wait(cData);
                         currentPartOfTotal = 0;
                     }

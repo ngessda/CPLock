@@ -10,5 +10,6 @@ namespace Lock
     {
         public Stack<int> Data { get; } = new Stack<int>();
         public bool IsProducerAlive { get; set; } = false;
+        public bool Flag { get; set; } = true;
     }
 }

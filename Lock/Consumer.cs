@@ -18,6 +18,7 @@ namespace Lock
         private int totalToProduce;
         private int workPlan;
         private int partCount;
+        private int count;
         
 
         public Consumer(ConcurrentData data, int productCount, int partCountOfTotal)
@@ -26,6 +27,7 @@ namespace Lock
             totalToProduce = productCount;
             partCount = partCountOfTotal;
             workPlan = totalToProduce / partCount;
+            count = data.Data.Count;
         }
         public bool IsStopped
         {
@@ -47,18 +49,22 @@ namespace Lock
         private void Consume()
         {
             int consumerId = Thread.CurrentThread.ManagedThreadId;
+            Thread.CurrentThread.Name = $"consumer {consumerId}";
             while (!IsStopped)
             {
-                if (threadsOfConsumerCount > cData.Data.Count)
+                if (threadsOfConsumerCount > cData.Data.Count && Monitor.IsEntered(cData))
                 {
-                    Stop();
-                    threadsOfConsumerCount--;
+                    Monitor.Wait(cData);
                 }
                 else
                 {
                     lock (cData)
                     {
-                        if (cData.Data.Count < workPlan)
+                        if(count == 0)
+                        {
+                            Monitor.Wait(cData);
+                        }
+                        if (cData.Data.Count < workPlan && cData.Flag)
                         {
                             if (cData.IsProducerAlive)
                             {
@@ -66,8 +72,15 @@ namespace Lock
                             }
                             else
                             {
-                                var count = cData.Data.Count;
-                                for (int i = 0; i < count / threadsOfConsumerCount; i++)
+                                var countForCycle = count / threadsOfConsumerCount;
+                                Monitor.Enter(cData);
+                                if (count % threadsOfConsumerCount != 0 && cData.Flag)
+                                {
+                                    countForCycle++;
+                                    cData.Flag = false;
+                                }
+                                Monitor.Exit(cData);
+                                for (int i = 0; i < countForCycle; i++)
                                 {
                                     var elem = cData.Data.Pop();
                                     Console.WriteLine($"Consumer #{consumerId}: consumed value {elem}");
@@ -77,12 +90,29 @@ namespace Lock
                         }
                         else
                         {
-                            for (int i = 0; i < workPlan / threadsOfConsumerCount; i++)
+                            var countForCycle = workPlan / threadsOfConsumerCount;
+                            Monitor.Enter(cData);
+                            if (workPlan % threadsOfConsumerCount != 0 && cData.Flag)
+                            {
+                                countForCycle++;
+                                cData.Flag = false;
+                            }
+                            Monitor.Exit(cData);
+
+                            if (!cData.IsProducerAlive)
+                            {
+                                Stop();
+                                continue;
+                            }
+                            for (int i = 0; i < countForCycle; i++)
                             {
                                 var elem = cData.Data.Pop();
                                 Console.WriteLine($"Consumer #{consumerId}: consumed value {elem}");
                             }
-                            Monitor.Pulse(cData);
+                            if(cData.Data.Count == 0)
+                            {
+                                Monitor.Pulse(cData);
+                            }
                         }
                     }
                 }
@@ -105,6 +135,7 @@ namespace Lock
             if (t != null && t.IsAlive)
             {
                 isStopped = true;
+                threadsOfConsumerCount--;
             }
         }
     }

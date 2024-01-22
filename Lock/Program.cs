@@ -10,11 +10,15 @@ namespace Lock
     {
         static void Main(string[] args)
         {
+            int counter = 10;
+            int divide = 2;
             ConcurrentData data = new ConcurrentData();
-            Producer producer = new Producer(data, 10, 2);
-            Consumer consumer = new Consumer(data, 10, 2);
+            Producer producer = new Producer(data, counter, divide);
+            Consumer consumer = new Consumer(data, counter, divide);
+            Consumer consumer_1 = new Consumer(data, counter, divide);
             producer.Start();
             consumer.Start();
+            consumer_1.Start();
             Console.ReadKey();
         }
     }
