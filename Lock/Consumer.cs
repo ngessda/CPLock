@@ -18,7 +18,6 @@ namespace Lock
         private int totalToProduce;
         private int workPlan;
         private int partCount;
-        private int count;
         
 
         public Consumer(ConcurrentData data, int productCount, int partCountOfTotal)
@@ -27,7 +26,6 @@ namespace Lock
             totalToProduce = productCount;
             partCount = partCountOfTotal;
             workPlan = totalToProduce / partCount;
-            count = data.Data.Count;
         }
         public bool IsStopped
         {
@@ -52,67 +50,69 @@ namespace Lock
             Thread.CurrentThread.Name = $"consumer {consumerId}";
             while (!IsStopped)
             {
-                if (threadsOfConsumerCount > cData.Data.Count && Monitor.IsEntered(cData))
-                {
-                    Monitor.Wait(cData);
-                }
-                else
-                {
                     lock (cData)
+                {
+                    if (cData.Data.Count == 0 && cData.IsProducerAlive)
                     {
-                        if(count == 0)
+                        Monitor.Wait(cData);
+                    }
+                    if (threadsOfConsumerCount > workPlan || !cData.IsProducerAlive)
+                    {
+                        Stop();
+                        continue;
+                    }
+
+                    if (cData.Data.Count < workPlan && cData.Flag)
+                    {
+                        if (cData.IsProducerAlive)
                         {
                             Monitor.Wait(cData);
                         }
-                        if (cData.Data.Count < workPlan && cData.Flag)
-                        {
-                            if (cData.IsProducerAlive)
-                            {
-                                Monitor.Wait(cData);
-                            }
-                            else
-                            {
-                                var countForCycle = count / threadsOfConsumerCount;
-                                Monitor.Enter(cData);
-                                if (count % threadsOfConsumerCount != 0 && cData.Flag)
-                                {
-                                    countForCycle++;
-                                    cData.Flag = false;
-                                }
-                                Monitor.Exit(cData);
-                                for (int i = 0; i < countForCycle; i++)
-                                {
-                                    var elem = cData.Data.Pop();
-                                    Console.WriteLine($"Consumer #{consumerId}: consumed value {elem}");
-                                }
-                                Stop();
-                            }
-                        }
                         else
                         {
-                            var countForCycle = workPlan / threadsOfConsumerCount;
+                            var count = cData.Data.Count;
+                            var countForCycle = count / threadsOfConsumerCount;
                             Monitor.Enter(cData);
-                            if (workPlan % threadsOfConsumerCount != 0 && cData.Flag)
+                            if (count % threadsOfConsumerCount != 0 && cData.Flag)
                             {
                                 countForCycle++;
                                 cData.Flag = false;
                             }
                             Monitor.Exit(cData);
-
-                            if (!cData.IsProducerAlive)
-                            {
-                                Stop();
-                                continue;
-                            }
                             for (int i = 0; i < countForCycle; i++)
                             {
                                 var elem = cData.Data.Pop();
                                 Console.WriteLine($"Consumer #{consumerId}: consumed value {elem}");
                             }
-                            if(cData.Data.Count == 0)
-                            {
-                                Monitor.Pulse(cData);
-                            }
+                            Stop();
+                        }
+                    }
+                    else
+                    {
+                        var count = cData.Data.Count;
+                        var countForCycle = workPlan / threadsOfConsumerCount;
+                        Monitor.Enter(cData);
+                        if (workPlan % threadsOfConsumerCount != 0 && cData.Flag)
+                        {
+                            countForCycle++;
+                            cData.Flag = false;
+                        }
+                        Monitor.Exit(cData);
+
+                        if (!cData.IsProducerAlive)
+                        {
+                            Stop();
+                            continue;
+                        }
+
+                        for (int i = 0; i < countForCycle; i++)
+                        {
+                            var elem = cData.Data.Pop();
+                            Console.WriteLine($"Consumer #{consumerId}: consumed value {elem}");
+                        }
+                        if (cData.Data.Count == 0)
+                        {
+                            Monitor.Pulse(cData);
                         }
                     }
                 }

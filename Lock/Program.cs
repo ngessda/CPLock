@@ -11,7 +11,7 @@ namespace Lock
         static void Main(string[] args)
         {
             int counter = 10;
-            int divide = 2;
+            int divide = 3 ;
             ConcurrentData data = new ConcurrentData();
             Producer producer = new Producer(data, counter, divide);
             Consumer consumer = new Consumer(data, counter, divide);
