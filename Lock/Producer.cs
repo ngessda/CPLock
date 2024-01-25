@@ -11,9 +11,6 @@ namespace Lock
         private bool isStopped = false;
         private int totalToProduce;
         private static Random random = new Random();
-        private int partCount = 0;
-        private int partOfTotal = 0;
-
 
         public bool IsStopped
         {
@@ -36,22 +33,14 @@ namespace Lock
         {
             cData = data;
             totalToProduce = productCount;
-            partCount = partCountOfTotal;
-            partOfTotal = totalToProduce / partCount;
         }
         private void Produce()
         {
-            if (partOfTotal < 0) 
-            {
-                Console.WriteLine("Ошибка, значение n больше N");
-                Stop();
-            }
             int currentCount = 0;
-            int currentPartOfTotal = 0;
             while (!IsStopped)
             {
 
-                if (currentCount == totalToProduce || totalToProduce < partCount)
+                if (currentCount == totalToProduce)
                 {
                     Stop();
                     continue;

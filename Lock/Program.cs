@@ -11,7 +11,7 @@ namespace Lock
         static void Main(string[] args)
         {
             int counter = 10;
-            int divide = 4;
+            int divide = 3;
             ConcurrentData data = new ConcurrentData();
             Producer producer = new Producer(data, counter, divide);
             Consumer consumer = new Consumer(data, counter, divide);
@@ -19,6 +19,7 @@ namespace Lock
             producer.Start();
             consumer.Start();
             consumer_1.Start();
+            Console.WriteLine(7 % 10);
             Console.ReadKey();
         }
     }
