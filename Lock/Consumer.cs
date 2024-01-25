@@ -52,19 +52,15 @@ namespace Lock
             {
                     lock (cData)
                 {
-                    if (cData.Data.Count == 0 && cData.IsProducerAlive)
-                    {
-                        Monitor.Wait(cData);
-                    }
-                    if (threadsOfConsumerCount > workPlan || !cData.IsProducerAlive)
+
+                    if (threadsOfConsumerCount > workPlan)
                     {
                         Stop();
                         continue;
                     }
-
                     if (cData.Data.Count < workPlan && cData.Flag)
                     {
-                        if (cData.IsProducerAlive)
+                        if (cData.IsProducerAlive )
                         {
                             Monitor.Wait(cData);
                         }
@@ -114,6 +110,8 @@ namespace Lock
                         {
                             Monitor.Pulse(cData);
                         }
+
+                        Monitor.Wait(cData);
                     }
                 }
                     Thread.Sleep(150);

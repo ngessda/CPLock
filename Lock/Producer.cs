@@ -51,7 +51,7 @@ namespace Lock
             while (!IsStopped)
             {
 
-                if (currentCount == totalToProduce)
+                if (currentCount == totalToProduce || totalToProduce < partCount)
                 {
                     Stop();
                     continue;
@@ -63,6 +63,11 @@ namespace Lock
                     cData.Data.Push(data);
                     currentCount++;
                     currentPartOfTotal++;
+                    if (currentCount == totalToProduce)
+                    {
+                        cData.Flag = true;
+                        Monitor.PulseAll(cData);
+                    }
                     if (currentPartOfTotal >= partOfTotal)
                     {
                         cData.Flag = true;
@@ -70,6 +75,7 @@ namespace Lock
                         Monitor.Wait(cData);
                         currentPartOfTotal = 0;
                     }
+
                 }
                 Thread.Sleep(200);
             }
