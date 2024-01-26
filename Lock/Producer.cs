@@ -1,4 +1,6 @@
 ﻿using System;
+using System.Configuration;
+using System.Runtime.CompilerServices;
 using System.Threading;
 
 namespace Lock
@@ -9,7 +11,9 @@ namespace Lock
         private ConcurrentData cData;
         private object producerLock = new object();
         private bool isStopped = false;
-        private int totalToProduce;
+        private int _NTotalToProduce;
+        private int _nCounterOfParts;
+        private int _MPartsToProduce;
         private static Random random = new Random();
 
         public bool IsStopped
@@ -29,18 +33,19 @@ namespace Lock
                 }
             }
         }
-        public Producer(ConcurrentData data, int productCount, int partCountOfTotal)
+        public Producer(ConcurrentData data, int productCount, int parts)
         {
             cData = data;
-            totalToProduce = productCount;
-        }
+            _NTotalToProduce = productCount;
+            _nCounterOfParts = parts;
+            _MPartsToProduce = _NTotalToProduce / _nCounterOfParts;
+    }
         private void Produce()
         {
             int currentCount = 0;
             while (!IsStopped)
             {
-
-                if (currentCount == totalToProduce)
+                if (currentCount == _NTotalToProduce)
                 {
                     Stop();
                     continue;
@@ -51,20 +56,12 @@ namespace Lock
                     Console.WriteLine($"Produce: produced value {data}");
                     cData.Data.Push(data);
                     currentCount++;
-                    currentPartOfTotal++;
-                    if (currentCount == totalToProduce)
+                    if (currentCount % _MPartsToProduce == 0 || currentCount == _NTotalToProduce)
                     {
                         cData.Flag = true;
-                        Monitor.PulseAll(cData);
-                    }
-                    if (currentPartOfTotal >= partOfTotal)
-                    {
-                        cData.Flag = true;
-                        Monitor.PulseAll(cData);
+                        Monitor.Pulse(cData);
                         Monitor.Wait(cData);
-                        currentPartOfTotal = 0;
                     }
-
                 }
                 Thread.Sleep(200);
             }

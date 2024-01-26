@@ -14,11 +14,12 @@ namespace Lock
         private ConcurrentData cData;
         private object consumerLock = new object();
         private bool isStopped = false;
-        private int workPlan = 3;
+        private int workPlan;
 
-        public Consumer(ConcurrentData data, int productCount, int partCountOfTotal)
+        public Consumer(ConcurrentData data, int dividedCount)
         {
             cData = data;
+            workPlan = dividedCount;
         }
         public bool IsStopped
         {
@@ -45,33 +46,37 @@ namespace Lock
             {
                 lock (cData)
                 {
-                    if(cData.Data.Count < workPlan)
+                    if (!cData.Flag && cData.IsProducerAlive)
                     {
-                        if (cData.IsProducerAlive)
-                        {
-                            Monitor.Wait(cData);
-                        }
-                        else
+                        Monitor.Wait(cData);
+                        continue;
+                    }
+                    else
+                    {
+                        if (cData.Data.Count < workPlan)
                         {
                             var count = cData.Data.Count;
-                            for (int i = 0; i < count; i++) 
+                            for (int i = 0; i < count; i++)
                             {
                                 var elem = cData.Data.Pop();
                                 Console.WriteLine($"Consumer #{consumerID}: consumed value {elem}");
                             }
                             Stop();
                         }
-                    }
-                    else
-                    {
-                        for (int i = 0; i < workPlan; i++)
+                        else
                         {
-                            var elem = cData.Data.Pop(); 
-                            Console.WriteLine($"Consumer #{consumerID}: consumed value {elem}");
+                            for (int i = 0; i < workPlan; i++)
+                            {
+                                var elem = cData.Data.Pop();
+                                Console.WriteLine($"Consumer #{consumerID}: consumed value {elem}");
+                            }
                         }
                     }
+                    Monitor.Pulse(cData);
+                    cData.Flag = false;
                 }
-                Thread.Sleep(1500);
+                Thread.Sleep(150);
+                
             }
             Console.WriteLine($"Consumer's #{consumerID} job is over");
         }
