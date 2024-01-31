@@ -59,7 +59,7 @@ namespace Lock
                     if (currentCount % _MPartsToProduce == 0 || currentCount == _NTotalToProduce)
                     {
                         cData.Flag = true;
-                        Monitor.Pulse(cData);
+                        Monitor.PulseAll(cData);
                         Monitor.Wait(cData);
                     }
                 }

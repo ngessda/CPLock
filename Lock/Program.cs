@@ -15,8 +15,10 @@ namespace Lock
             ConcurrentData data = new ConcurrentData();
             Producer producer = new Producer(data, counter, div);
             Consumer consumer = new Consumer(data, counter / div);
+            Consumer consumer1 = new Consumer(data, counter / div);
             producer.Start();
             consumer.Start();
+            consumer1.Start();
             Console.ReadKey();
         }
     }
